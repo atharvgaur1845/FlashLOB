@@ -85,3 +85,5 @@ Thumbs.db
 
 # Accidental shell artifacts from unquoted version specifiers, e.g. "pytest>=7.4"
 /=*
+
+Roadmap.md 

@@ -32,9 +32,9 @@
 | **Target venue (P2)** | ICML 2027 or NeurIPS 2026 main track |
 | **Primary dataset** | LOBSTER AAPL 2012-06-21 (free sample) |
 | **Secondary dataset** | FI-2010 (benchmark, for baseline comparison) |
-| **Hardware** | Single A100 80GB or RTX 4090 24GB |
-| **Language** | Python 3.10+, PyTorch 2.x, Triton 2.x |
-| **Status** | [ ] Not started / [ ] In progress / [ ] Complete |
+| **Hardware** | Spec: A100 80GB / RTX 4090 24GB. **Actual dev box: RTX 4060 8GB** (config auto-scales) |
+| **Language** | Python 3.12, PyTorch 2.12+cu130, Triton 3.7 (in `.venv`) |
+| **Status** | [ ] Not started / [x] **In progress** / [ ] Complete — all code built + unit-tested; real-data experiment runs pending |
 
 ### Core Claim (one sentence)
 
@@ -43,6 +43,50 @@
 > high-impact events predictable from Hawkes microstructure theory, and that a
 > domain-aware Triton attention kernel exploiting this structure enables such
 > contexts on a single GPU.
+
+---
+
+## 0. Build Status (auto-filled 2026-06-07)
+
+**Legend:** ✅ code complete + verified · 🟡 code complete, needs real-data run · ⬜ not started
+
+### Implementation — ALL CODE BUILT & UNIT-TESTED (17/17 tests pass)
+
+| Task group | Files | Status | Verified on |
+|---|---|---|---|
+| D1 FI-2010 loader | `src/data/fi2010.py` | ✅ | real FI-2010: 254k train / 55k test, 40 feats, bal 20/61/20 |
+| D2 LOBSTER loader | `src/data/lobster.py` | ✅ | real AAPL: 400k events, spread>0, types 1–5 |
+| D3 Event tokenizer | `src/data/lobster.py::tokenize` | ✅ | real AAPL: 8-dim, finite, time_norm∈[0,1] |
+| D4 Labels (dir+vol) | `src/data/labels.py` | ✅ | smoothed-mid dir + forward realized-vol |
+| D5 Dataset | `src/data/dataset.py` | ✅ | windowing + meta + collate |
+| M1–M4 Model | `src/model/{embedding,positional,attention,head,transformer}.py` | ✅ | 1.2M params, grad flow, RoPE time-sensitive |
+| M5 Mask factory | `src/model/masks.py` | ✅ | sliding / vol-P90 / hawkes-topk / type-local |
+| T1–T3 Train infra | `src/train/{trainer,profiler,metrics}.py` | ✅ | tiny run: 88MB@L100, 94k tok/s |
+| E0 Phase 0 sweep | `experiments/phase0_context_scaling.py` | 🟡 | ran on synthetic; needs real sweep |
+| Phase -1 PILOT | `experiments/phase_minus1_pilot.py` | ✅ | **real AAPL, preliminary GO**: vol MAE −39% (ctx100→500), attn cluster 0.21, mem 10.5×. Needs full 5-epoch run for the official verdict. |
+| Gates | `experiments/gate_check.py` | ✅ | phase-0 gate verdict logic |
+| A0/I1 Attn analysis | `src/analysis/attention_viz.py` | ✅ | by-event-type 4×4 + heatmap |
+| I2 Attn↔impact | `src/analysis/hawkes_corr.py` | ✅ | Spearman/Pearson |
+| H1 Hawkes calibrate | `src/hawkes/calibrate.py` | ✅ | scipy MLE (tick fallback); sane A/D/μ |
+| H2 Hawkes bias | `src/hawkes/bias.py` | ✅ | vectorized == ref loop to 1e-7 |
+| Hawkes GoF | `src/hawkes/validate.py` | ✅ | residuals + QQ plot |
+| E1 Phase 1 ablation | `experiments/phase1_hawkes_ablation.py` | 🟡 | 4 variants run on synthetic |
+| K0 Reference | `src/kernel/reference.py` | ✅ | correctness oracle |
+| K1–K4 Triton kernel | `src/kernel/flash_lob.py` | ✅ | **== reference, max 9.8e-4** @ L=512/1k/2k |
+| K5 Benchmark | `src/kernel/benchmark.py` | ✅ | **real run**: dense+bias OOM@8192, FlashLOB 4.5× faster@16k |
+| B1/B2/B5/B6 Baselines | `baselines/` | 🟡 | DeepLOB+TLOB reimpl + Dense + FlashLOB; run on synthetic |
+| W5/W6 Paper assets | `paper/generate_{tables,figures}.py` | ✅ | tables+figures generate from result JSON |
+
+### Real result tables (Sec. 3) — still `_fill_` (require the runs below)
+
+These stay empty until the experiments run on real data; nothing is faked.
+
+### Deviations from this roadmap (decided during build — confirm or revert)
+1. **Baselines reduced to DeepLOB / TLOB / Dense-transformer / FlashLOB** (per your instruction). Dropped MLPLOB, TransLOB, LOBERT. Baselines are clean **in-repo reimplementations** (more robust than external repos); `scripts/clone_baselines.sh` fetches originals to cross-check.
+2. **Hawkes kernel = single per-pair exp `A[i,j]·exp(-D[i,j]·Δt)`** (master-prompt form), NOT the roadmap's **multi-scale shared-decay** `Σ_d (1/3)e^{-δ_d Δt}`. ⚠️ The paper's "one equation" (W2) is the multi-scale form — **pick one** before Phase 1 real run. (Single-pair is what's coded + tested now.)
+3. **Hawkes bias currently reads normalized `meta['times']`** while calibration fits in **raw seconds** → decay term degenerates. ⚠️ Fix before trusting Phase 1: feed raw-second times to `HawkesBias` (add `meta['times_raw']`), keep normalized times for RoPE. Does NOT affect Phase -1/0.
+4. **Smoothed-mid direction labels**: implemented per D4. On AAPL, balance is horizon-sensitive — h=10→75% stable, **h=50→32/38/30**. Consider `data.horizon_events: 50` for LOBSTER direction (volatility gate is unaffected).
+5. **Triton kernel is forward-only** — powers the memory/speed argument (Table 4). Training uses PyTorch masking for the sparse path (Phase 1 approach). Don't bill it as the training engine.
 
 ### What this paper is NOT
 

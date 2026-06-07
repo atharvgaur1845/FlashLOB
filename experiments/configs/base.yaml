@@ -2,8 +2,8 @@
 
 data:
   dataset: lobster            # lobster | fi2010
-  lobster_message: data/lobster/sample_message.csv
-  lobster_book: data/lobster/sample_orderbook.csv
+  lobster_message: data/lobster/AAPL_2012-06-21_34200000_57600000_message_10.csv
+  lobster_book: data/lobster/AAPL_2012-06-21_34200000_57600000_orderbook_10.csv
   fi2010_dir: data/fi2010
   stride: 50                  # window stride for LOBEventDataset
   horizon_events: 10         # direction-label horizon (events ahead)
