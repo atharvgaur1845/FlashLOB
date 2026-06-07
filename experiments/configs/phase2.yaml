@@ -1,0 +1,18 @@
+_base_: base.yaml
+
+# Phase 2 — Triton FlashLOB kernel benchmarks.
+phase2:
+  context_lengths: [512, 1024, 2048, 4096, 8192, 16384]
+  output_dir: results/phase2
+  window_size: 256
+  n_global_hot: 64
+  batch_size: 4
+  n_warmup: 10
+  n_bench: 50
+
+model:
+  attention_backend: flashlob
+
+kernel:
+  block_m: 64
+  block_n: 64

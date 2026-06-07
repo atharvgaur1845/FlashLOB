@@ -1,0 +1,18 @@
+_base_: base.yaml
+
+# Phase 1 — Hawkes attention-bias ablation (fixed context, PyTorch masking).
+phase1:
+  context_length: 2048
+  output_dir: results/phase1
+  hawkes_params: data/processed/hawkes_params.json
+  sliding_window: 512
+  n_global_hot: 64
+  volume_percentile: 90
+  hawkes_min_gain: 0.005           # Hawkes must beat vol-threshold by >=0.5% acc
+  variants: [dense_fp16, sliding_512, sliding_threshold, sliding_hawkes]
+
+hawkes:
+  n_types: 4                       # limit, cancel, trade, large_trade
+  large_trade_percentile: 90
+  kernel: exp                      # exp | powerlaw (exp is default/fast)
+  penalty_C: 1000.0

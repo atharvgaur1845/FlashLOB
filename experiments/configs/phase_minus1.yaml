@@ -1,0 +1,22 @@
+_base_: base.yaml
+
+# Phase -1 — PILOT / KILL-SWITCH. Fast feasibility check before the full project.
+# Single stock, single seed, 5 epochs, dense transformer. ~2 days of compute.
+phase_minus1:
+  context_lengths: [100, 250, 500, 1000, 2048]
+  seed: 42
+  output_dir: results/phase_minus1
+  # Go/no-go thresholds for the three questions:
+  vol_improvement_min: 0.02     # vol MAE must drop >=2% from 100 -> 2048 (Q1)
+  attention_cluster_min: 0.15   # max row-normalized attn to any single type
+                                #   must exceed uniform(=0.25) by this margin (Q2)
+  # Q3 (memory) is descriptive: we just record peak VRAM per context.
+
+train:
+  epochs: 5
+
+runtime:
+  seeds: [42]
+
+model:
+  attention_backend: standard   # need attention weights for the clustering check

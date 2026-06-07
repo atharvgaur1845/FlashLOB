@@ -1,0 +1,87 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python packaging and build outputs
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+wheelhouse/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Test, coverage, and tooling caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.tox/
+.nox/
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+
+# Local secrets and machine-specific config
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs and profiler outputs
+*.log
+*.prof
+*.trace
+wandb/
+mlruns/
+runs/
+
+# ML checkpoints and model artifacts
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# Large data / generated arrays
+data/
+!data/.gitkeep
+!data/**/.gitkeep
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.parquet
+*.feather
+
+# Experiment outputs
+results/
+!results/.gitkeep
+!results/**/.gitkeep
+
+# Generated paper artifacts
+paper/figures/
+paper/tables/
+!paper/figures/.gitkeep
+!paper/tables/.gitkeep
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Accidental shell artifacts from unquoted version specifiers, e.g. "pytest>=7.4"
+/=*

@@ -1,0 +1,37 @@
+# Base config shared by all phases. Phase configs inherit via `_base_: base.yaml`.
+
+data:
+  dataset: lobster            # lobster | fi2010
+  lobster_message: data/lobster/sample_message.csv
+  lobster_book: data/lobster/sample_orderbook.csv
+  fi2010_dir: data/fi2010
+  stride: 50                  # window stride for LOBEventDataset
+  horizon_events: 10         # direction-label horizon (events ahead)
+  vol_window_seconds: 60.0   # realized-vol label window
+
+model:
+  d_model: 128
+  n_heads: 8
+  n_layers: 6
+  d_ff: 512
+  dropout: 0.1
+  attention_backend: flash2  # flash2 | standard | flashlob
+
+train:
+  batch_size: auto           # 'auto' => device.auto_budget()
+  epochs: 20
+  lr: 3.0e-4
+  weight_decay: 0.01
+  warmup_steps: 500
+  grad_clip: 1.0
+  loss_dir_weight: 0.7
+  loss_vol_weight: 0.3
+  amp: true                  # fp16 autocast
+  patience: 5
+  log_every: 100
+  ckpt_dir: results/checkpoints
+
+runtime:
+  seeds: [42, 123, 456]
+  device: auto
+  num_workers: 2

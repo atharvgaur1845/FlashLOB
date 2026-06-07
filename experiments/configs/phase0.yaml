@@ -1,0 +1,11 @@
+_base_: base.yaml
+
+# Phase 0 — context-scaling empirical study.
+phase0:
+  context_lengths: [100, 250, 500, 1000, 2048, 4096]
+  tasks: [direction, volatility]
+  output_dir: results/phase0
+  gate_min_vol_improvement: 0.03   # >=3% MAE reduction 500 -> 2048 to pass gate
+
+model:
+  attention_backend: flash2
